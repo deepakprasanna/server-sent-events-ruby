@@ -16,7 +16,7 @@ class Sample
   end
 
   def interested_items
-    XPath.match(xml, "//ComponentStream[@componentId='z-365' and @component='Linear']/Samples/*") 
+    XPath.match(xml, "//ComponentStream[@component='Linear']/Samples/*") 
   end
 end
 
