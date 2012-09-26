@@ -1,6 +1,24 @@
 require 'rexml/document'
-require 'net/http' 
-require 'pp'
+require 'net/http'
+require 'singleton'
+
+class Sample
+  include Singleton
+  include REXML
+
+  URL = "http://localhost:6500/sample"
+  def fetch
+    Net::HTTP.get_response(URI.parse(URL)).body 
+  end
+
+  def xml
+    REXML::Document.new(fetch)
+  end
+
+  def interested_items
+    XPath.match(xml, "//ComponentStream[@componentId='z-365' and @component='Linear']/Samples/*") 
+  end
+end
 
 class HomeAction < Cramp::Action
   self.transport = :sse
@@ -8,13 +26,12 @@ class HomeAction < Cramp::Action
   on_start :send_latest_time
   periodic_timer :send_latest_time, :every => 3
 
-  def send_latest_time
-    #url = "http://localhost:6500/current"  
-    #xml_data = Net::HTTP.get_response(URI.parse(url)).body 
-    #xml_data = REXML::Document.new(xml_data)
-    #xml_data.each_element("//Samples/*") do |sample|
-      #render "deepak" 
-    #end 
-    render "<b>deepak</b>" 
+  def send_latest_time 
+    raw = "data: \n"
+    Sample.instance.interested_items.each do |sample|
+      raw << "#{sample.attributes['name']} - #{sample.text} <br />"
+    end 
+    raw << "\n\n"
+    render raw
   end 
 end
